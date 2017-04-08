@@ -1,0 +1,11 @@
+SBUS  KEYWORD1
+
+begin KEYWORD2
+failsafeActive KEYWORD2
+signalLossActive KEYWORD2
+getChannel  KEYWORD2
+getChannelRaw  KEYWORD2
+waitFrame KEYWORD2
+sbusBlocking LITERAL1
+sbusNonBlocking LITERAL1
+
