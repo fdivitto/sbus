@@ -1,11 +1,11 @@
 Arduino library for SBUS (Futaba)
 ===============================
 
-SBUS library supports synchronous (blocking) or asynchronous (non-blocking) decoding of Futaba SBUS without requiring a TTL inverter.
+SBUS library supports synchronous (blocking) or asynchronous (non-blocking) decoding of Futaba SBUS **without** requiring a **TTL inverter**.
 
 SBUS uses the TIMER 2 and the Pin Change interrupt. It doesn't use UARTs, so every pin can be used.
 
-Does not require a TTL inverter.
+**Does not require a TTL inverter.**
 
 Non blocking mode usage:
 
