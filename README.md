@@ -45,7 +45,7 @@ void loop() {
 }
 ```
 
-sbus.waitFrame() needs to be called. It returns "false" on timeout (default is 2000 seconds). sbus.waitFrame() waits for the next frame the returns.
+sbus.waitFrame() needs to be called. It returns "false" on timeout (default is 2 seconds). sbus.waitFrame() waits for the next frame the returns.
 
 
 
