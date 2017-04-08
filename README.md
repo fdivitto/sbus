@@ -13,13 +13,13 @@ Non blocking mode usage:
 SBUS sbus;
 
 void setup() {
-	sbus.begin(3, sbusNonBlocking);  	// use pin 3
+  sbus.begin(3, sbusNonBlocking);  	// use pin 3
 }
 
 void loop() {
-	uint16_t channel_1 = sbus.getChannel(1);
-    uint16_t channel_2 = sbus.getChannel(2);
-    ...etc...
+  uint16_t channel_1 = sbus.getChannel(1);
+  uint16_t channel_2 = sbus.getChannel(2);
+  ...etc...
 }
 ```
 
@@ -33,15 +33,15 @@ Blocking usage:
 SBUS sbus;
 
 void setup() {
-	sbus.begin(3, sbusBlocking);  // use pin 3
+  sbus.begin(3, sbusBlocking);  // use pin 3
 }
 
 void loop() {
-	if (sbus.waitFrame()) {    
-  		uint16_t channel_1 = sbus.getChannel(1);
-	    uint16_t channel_2 = sbus.getChannel(2);
-    	...etc...
-    }
+  if (sbus.waitFrame()) {    
+    uint16_t channel_1 = sbus.getChannel(1);
+    uint16_t channel_2 = sbus.getChannel(2);
+     ...etc...
+  }
 }
 ```
 
