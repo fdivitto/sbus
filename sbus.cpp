@@ -90,99 +90,91 @@ inline void disablePinChangeInterrupts()
 
 // handle pin change interrupt for D0 to D7 here
 ISR(PCINT2_vect) 
-{
-  // start bit?
-  if (pinGet(s_pin, s_pinMask) > 0) {
+{  
   
+  // start bit?
+  if (pinGet(s_pin, s_pinMask)) {
+
     // reset timer 2 counter
     TCNT2 = 0;
 
-    // start bit received
-    uint8_t receivedBitIndex = 1;
-    uint8_t receivingWord = 0;
-    
-    // receive other bits
+    disablePinChangeInterrupts();
+
+    // start bit received    
+    uint8_t receivingWord = 0;    
 
     // reset OCF2A flag by writing "1"
     TIFR2 |= 1 << OCF2A;
 
-    uint8_t calc_parity = 0xFF;
+    uint8_t parity = 0xFF;    
 
-    while (true) {
+    // receive other bits (including parity bit, ignore stop bits)
+    for (uint8_t receivedBitIndex = 0; receivedBitIndex < 9; ++receivedBitIndex) {
 
-      // wait for TCNT2 == OCR2A
+      // wait for TCNT2 == OCR2A      
+      // warn: inside this loop interrupts are re-enabled to allow other libraries to work correctly (ie Servo library)
+      interrupts();
       while (!(TIFR2 & (1 << OCF2A)))
         ;
+      noInterrupts();
 
       // reset OCF2A flag by writing "1"
       TIFR2 |= 1 << OCF2A;
       
       // sample current bit  
-      if (receivedBitIndex >= 1 && receivedBitIndex <= 8) {
-        if (pinGet(s_pin, s_pinMask) > 0)
-          receivingWord |= 1 << (receivedBitIndex - 1);
-        else
-          calc_parity = ~calc_parity;
-      }
-
-      // last bit?
-      if (receivedBitIndex == 9) {
-
-        // check parity
-        uint8_t in_parity = pinGet(s_pin, s_pinMask) > 0;
-        if ((calc_parity && !in_parity) || (!calc_parity && in_parity)) {          
-          // parity check failed!
-          s_receivingWordIndex = 0;
-          break;          
-        }
-    
-        receivingWord = ~receivingWord;
-    
-        if (s_receivingWordIndex == 0) {
-    
-          //  start byte (must be 0x0F)
-          if (receivingWord != 0x0F) {
-            // wrong start byte, restart word count
-            s_receivingWordIndex = 0;
-            break;
-          }
-    
-        } else if (s_receivingWordIndex == 24) {
-          
-          // last word, restart word count
-          if (s_mode == sbusBlocking)
-            disablePinChangeInterrupts();            
-          s_receivingWordIndex = 0;
-          break;
-          
-        } else {
-    
-          // channels and flags
-          s_frame[s_receivingWordIndex - 1] = receivingWord;
-          
-        }
-    
-        // prepare for the next word          
-        ++s_receivingWordIndex;
-
-        break;
-        
-      } else {
-
-        // other bits required, continue loop
-        
-        ++receivedBitIndex;
-    
-      }
-
-      // exit loop, a pin change (start bit) is required to restart
-    
+      if (pinGet(s_pin, s_pinMask))
+        receivingWord |= 1 << receivedBitIndex; // parity shift here as >7 bit, so it is just discarded
+      else
+        parity = ~parity;
+      
     }
 
-    // reset pin change interrupt flag
-    PCIFR = 0xFF;    
+    // check parity
+    if (!parity) {
+      
+      // parity check failed!
+      s_receivingWordIndex = 0;
+      
+    } else {
 
+      // parity ok
+      
+      receivingWord = ~receivingWord;
+  
+      if (s_receivingWordIndex == 0) {
+  
+        //  check start word (must be 0x0F)
+        if (receivingWord == 0x0F)          
+          ++s_receivingWordIndex; // bypass this word
+
+      } else if (s_receivingWordIndex == 24) {
+
+        if (receivingWord == 0x00) 
+          ++s_receivingWordIndex; // bypass this word
+
+      } else {
+          
+        // save channels and flags and last ending word
+        s_frame[s_receivingWordIndex - 1] = receivingWord;
+
+        // next word          
+        ++s_receivingWordIndex;
+        
+      }
+  
+    }
+    
+    // reset pin change interrupt flag
+    PCIFR |= s_PCICRMask;
+
+    if (s_receivingWordIndex < 25 || s_mode == sbusNonBlocking)
+      enablePinChangeInterrupts();  
+
+    if (s_receivingWordIndex == 25)                
+        s_receivingWordIndex = 0;    // last word, restart word count
+  
   }
+
     
 }
 
@@ -191,7 +183,10 @@ ISR(PCINT2_vect)
 bool SBUS::waitFrame(uint32_t timeOut)
 {
   if (s_mode == sbusBlocking) {
-    enablePinChangeInterrupts();
+
+    // will be disabled inside the ISR
+    enablePinChangeInterrupts();  
+    
     // wait until Pin change bit return back to 0
     uint32_t t0 = millis();
     while (PCICR & s_PCICRMask)
