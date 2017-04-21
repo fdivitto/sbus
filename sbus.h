@@ -1,5 +1,5 @@
 /*
-  sbus.cpp
+  sbus.h
 
   Copyright (c) 2017, Fabrizio Di Vittorio (fdivitto2013@gmail.com)
 
