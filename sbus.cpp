@@ -36,7 +36,7 @@
 #define isLow(P)            ((*(pinOfPin(P)) & pinMask(P)) == 0)
 #define pinGet(pin, mask)   (((*(pin)) & (mask)) > 0)
 
-static uint8_t * s_pin;
+static volatile uint8_t * s_pin;
 static uint8_t s_pinMask;
 static uint8_t s_PCICRMask;
 
