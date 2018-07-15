@@ -47,6 +47,8 @@ static volatile uint8_t s_receivingWordIndex = 0;
 // received frame
 static volatile uint8_t s_frame[23];
 
+static volatile bool s_hasSignal = false;
+
   
 struct chinfo_t {
   uint8_t idx;
@@ -159,6 +161,7 @@ static void handleInterrupt()
           
         // save channels and flags and last ending word
         s_frame[s_receivingWordIndex - 1] = receivingWord;
+        s_hasSignal = true;
 
         // next word          
         ++s_receivingWordIndex;
@@ -238,6 +241,12 @@ uint16_t SBUS::getChannelRaw(uint8_t channelIndex)
 uint16_t SBUS::getChannel(uint8_t channelIndex)
 {
   return 5 * getChannelRaw(channelIndex) / 8 + 880;
+}
+
+
+bool SBUS::hasSignal()
+{
+  return s_hasSignal;
 }
 
 
