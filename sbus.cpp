@@ -22,13 +22,12 @@
 
 
 // quick IO functions
-#define portOfPin(P)        (((P) >= 0 && (P) < 8) ? &PORTD : (((P) > 7 && (P) < 14) ? &PORTB : &PORTC))
-#define ddrOfPin(P)         (((P) >= 0 && (P) < 8) ? &DDRD : (((P) > 7 && (P) < 14) ? &DDRB : &DDRC))
-#define pinOfPin(P)         (((P) >= 0 && (P) < 8) ? &PIND : (((P) > 7 && (P) < 14) ? &PINB : &PINC))
-#define pinIndex(P)         ((uint8_t)(P > 13 ? P - 14 : P & 7))
-#define pinMask(P)          ((uint8_t)(1 << pinIndex(P)))
+#define portOfPin(P)        portOutputRegister(digitalPinToPort(P))
+#define ddrOfPin(P)         portModeRegister(digitalPinToPort(P))
+#define pinOfPin(P)         portInputRegister(digitalPinToPort(P))
+#define pinMask(P)          digitalPinToBitMask(P)
 #define pinAsInput(P)       (*(ddrOfPin(P)) &= ~pinMask(P))
-#define pinAsInputPullUp(P) (*(ddrOfPin(P)) &= ~pinMask(P); digitalHigh(P))
+#define pinAsInputPullUp(P) (*(ddrOfPin(P)) &= ~pinMask(P)); digitalHigh(P)
 #define pinAsOutput(P)      (*(ddrOfPin(P)) |= pinMask(P))
 #define digitalLow(P)       (*(portOfPin(P)) &= ~pinMask(P))
 #define digitalHigh(P)      (*(portOfPin(P)) |= pinMask(P))
@@ -88,9 +87,13 @@ inline void disablePinChangeInterrupts()
 }
 
 
-// handle pin change interrupt for D0 to D7 here
-ISR(PCINT2_vect) 
-{  
+// handle pin change interrupt here
+static void handleInterrupt();
+#define ISRN(N) ISR(PCINT ## N ## _vect) { if (s_PCICRMask == 1 << (N)) handleInterrupt(); }
+ISRN(0) ISRN(1) ISRN(2)
+
+static void handleInterrupt()
+{
   
   // start bit?
   if (pinGet(s_pin, s_pinMask)) {
