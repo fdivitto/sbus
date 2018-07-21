@@ -34,6 +34,7 @@ class SBUS {
 
     void begin(uint8_t pin, mode_t mode);
     
+    bool hasSignal();
     bool failsafeActive();
     bool signalLossActive();
     
