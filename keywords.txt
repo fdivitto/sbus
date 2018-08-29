@@ -6,6 +6,6 @@ signalLossActive	KEYWORD2
 getChannel	KEYWORD2
 getChannelRaw	KEYWORD2
 waitFrame	KEYWORD2
-sbusBlocking LITERAL1
-sbusNonBlocking LITERAL1
+sbusBlocking	LITERAL1
+sbusNonBlocking	LITERAL1
 
