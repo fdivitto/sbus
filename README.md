@@ -61,7 +61,7 @@ sbus.waitFrame() needs to be called. It returns "false" on timeout (default is 2
 
 ===== Additional Notes =====
 
-Thank you to fdivitto. You're work is awesome!
+Thank you to fdivitto. Your work is awesome!
 
 Supported Pins
 For unlisted boards, 
