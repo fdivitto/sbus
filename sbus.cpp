@@ -2,6 +2,7 @@
   sbus.cpp
 
   Copyright (c) 2017, Fabrizio Di Vittorio (fdivitto2013@gmail.com)
+  Edited by ultimate1112.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -21,7 +22,7 @@
 #include "sbus.h"
 
 
-// quick IO functions
+// Quick IO functions
 #define portOfPin(P)        portOutputRegister(digitalPinToPort(P))
 #define ddrOfPin(P)         portModeRegister(digitalPinToPort(P))
 #define pinOfPin(P)         portInputRegister(digitalPinToPort(P))
@@ -89,10 +90,17 @@ inline void disablePinChangeInterrupts()
 }
 
 
-// handle pin change interrupt here
+// Handle pin change interrupt here
 static void handleInterrupt();
 #define ISRN(N) ISR(PCINT ## N ## _vect) { if (s_PCICRMask == 1 << (N)) handleInterrupt(); }
-ISRN(0) ISRN(1) ISRN(2)
+
+// Define Pin Change Interrupts for specific board
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega328P__)
+  ISRN(0) ISRN(1) ISRN(2)
+#else
+  // Fall back to PCINT[0-7]
+  ISRN(0)
+#endif
 
 static void handleInterrupt()
 {
@@ -100,31 +108,31 @@ static void handleInterrupt()
   // start bit?
   if (pinGet(s_pin, s_pinMask)) {
 
-    // reset timer 2 counter
-    TCNT2 = 0;
+    // reset timer 0 counter
+    TCNT0 = 0;
 
     disablePinChangeInterrupts();
 
     // start bit received    
     uint8_t receivingWord = 0;    
 
-    // reset OCF2A flag by writing "1"
-    TIFR2 |= 1 << OCF2A;
+    // reset OCF0A flag by writing "1"
+    TIFR0 |= 1 << OCF0A;
 
     uint8_t parity = 0xFF;    
 
     // receive other bits (including parity bit, ignore stop bits)
     for (uint8_t receivedBitIndex = 0; receivedBitIndex < 9; ++receivedBitIndex) {
 
-      // wait for TCNT2 == OCR2A      
+      // wait for TCNT0 == OCR0A      
       // warn: inside this loop interrupts are re-enabled to allow other libraries to work correctly (ie Servo library)
       interrupts();
-      while (!(TIFR2 & (1 << OCF2A)))
+      while (!(TIFR0 & (1 << OCF0A)))
         ;
       noInterrupts();
 
-      // reset OCF2A flag by writing "1"
-      TIFR2 |= 1 << OCF2A;
+      // reset OCF0A flag by writing "1"
+      TIFR0 |= 1 << OCF0A;
       
       // sample current bit  
       if (pinGet(s_pin, s_pinMask))
@@ -272,17 +280,17 @@ void SBUS::begin(uint8_t pin, mode_t mode)
   s_pinMask    = pinMask(pin);
   s_PCICRMask  = 1 << digitalPinToPCICRbit(pin);
   
-  //// setup TIMER 2 CTC
+  //// setup TIMER 0 CTC
 
   // select "Clear Timer on Compare (CTC)" mode
-  TCCR2A = 1 << WGM21; 
+  TCCR0A = 1 << WGM01; 
   
   // no prescaling
-  TCCR2B = 1 << CS20; 
+  TCCR0B = 1 << CS00; 
 
-  // set TOP timer 2 value
+  // set TOP timer 0 value
   // with no-prescaler 1/16000000=0.00000000625, each bit requires 10us, so reset timer 2 every 10us, so reset timer every 10/0.0625 = 160 ticks
-  OCR2A = F_CPU / 1000000 * 10 - 1; // for 16MHz = 159;  
+  OCR0A = F_CPU / 1000000 * 10 - 1; // for 16MHz = 159;  
 
   //// setup pin change interrupt
   

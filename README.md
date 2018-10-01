@@ -3,7 +3,7 @@ Arduino library for SBUS (Futaba)
 
 SBUS library supports synchronous (blocking) or asynchronous (non-blocking) decoding of Futaba SBUS **without** requiring a **TTL inverter**.
 
-SBUS uses the TIMER 2 and the Pin Change interrupt. It doesn't use UARTs, so those pins can be used:
+SBUS uses the TIMER 0 and the Pin Change interrupt. It doesn't use UARTs, so those pins can be used:
 ```
  Arduino Uno/Nano/Mini: All pins are usable
  Arduino Mega: 10, 11, 12, 13, 50, 51, 52, 53, A8 (62), A9 (63), A10 (64),
@@ -59,6 +59,34 @@ void loop() {
 
 sbus.waitFrame() needs to be called. It returns "false" on timeout (default is 2 seconds). sbus.waitFrame() waits for the next frame the returns.
 
+===== Additional Notes =====
 
+Thank you to fdivitto. Your work is awesome!
+
+Supported Pins
+For unlisted boards, 
+1. Check the interrupt vector table for listing of PCINTx_vect
+2. Chip pinouts for PCINTx, corresponding to PCINTx_vect
+3. TIMER0 is an 8-bit timer
+
+ATMega328P (Uno, Nano): 
+ISRN(0): D8,D9,D10,D11,D12,D13 
+ISRN(1): A0,A1,A2,A3,A4,A5,D0,D1
+ISRN(2): D2,D3,D4,D5,D6,D7
+VERIFIED 8-BIT TIMER ON TC0 and TC2
+
+ATMega32u4 (Leonardo, Micro):
+ISRN(0): SS(PB0),SCK(PB1),MOSI(PB2),MISO(PB3),8,9,10,11
+VERIFIED 8BIT TIMER ON TC0
+
+ATMega2560 (Mega2560): 
+ISRN(0): SS(PB0),SCK(PB1),MOSI(PB2),MISO(PB3),D1,D10,D11,D12,D13
+ISRN(1): D0,D15,D14
+ISRN(2): A8,A9,A10,A11,A12,A13,A14,A15
+VERIFIED 8-BIT TIMER ON TC0
+
+===== CHANGES =====
+Changed TIMER2 to TIMER0 for support for more boards; especially the ATMega32u4
+Conditional ISR for PinChangeInterrupt, since the smaller boards only have PCINT0_vect interrupt vector.
 
 
